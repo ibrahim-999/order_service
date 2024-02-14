@@ -1,0 +1,57 @@
+version: '3.9'
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: order_nginx
+    ports:
+      - "8081:80"
+    volumes:
+      - ./src:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d
+    depends_on:
+      - order_app
+      - order_db
+    networks:
+      - shopping
+
+  order_db:
+    image: mysql
+    container_name: order_db
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_DATABASE=order_db
+      - MYSQL_ROOT_PASSWORD=password
+    networks:
+      - shopping
+
+  order_app:
+    container_name: order_app
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+    volumes:
+      - ./src:/var/www
+    ports:
+      - "9001:9000"
+    working_dir: /var/www
+    networks:
+      - shopping
+
+  #phpmyadmin:
+  order_phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: order_phpmyadmin
+    ports:
+      - "3400:80"
+    depends_on:
+      - order_db
+    networks:
+      - shopping
+
+networks:
+  shopping:
+    external: true
